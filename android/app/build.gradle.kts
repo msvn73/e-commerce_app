@@ -25,7 +25,7 @@ android {
         applicationId = "com.example.e_commerce_app"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = 26 // Minimum SDK for adaptive icons
+        minSdk = flutter.minSdkVersion // Support for more devices
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
@@ -42,6 +42,7 @@ android {
 
 dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
+    implementation("com.google.android.gms:play-services-auth:20.7.0")
 }
 
 flutter {

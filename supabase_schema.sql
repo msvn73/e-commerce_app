@@ -304,3 +304,59 @@ INSERT INTO products (name, description, price, category_id, image_urls, stock_q
 ('Nike Air Max', 'Nike Air Max spor ayakkabı', 1299.99, (SELECT id FROM categories WHERE name = 'Spor'), ARRAY['https://example.com/nike1.jpg'], 100),
 ('Adidas T-Shirt', 'Adidas pamuklu t-shirt', 299.99, (SELECT id FROM categories WHERE name = 'Giyim'), ARRAY['https://example.com/adidas1.jpg'], 200)
 ON CONFLICT DO NOTHING;
+
+-- ============================================
+-- STORAGE POLICIES
+-- ============================================
+
+-- Önce mevcut storage politikalarını temizle (eğer varsa)
+DROP POLICY IF EXISTS "Public Access" ON storage.objects;
+DROP POLICY IF EXISTS "Authenticated users can upload" ON storage.objects;
+DROP POLICY IF EXISTS "Users can delete own images" ON storage.objects;
+DROP POLICY IF EXISTS "Public Access Avatars" ON storage.objects;
+DROP POLICY IF EXISTS "Authenticated users can upload avatars" ON storage.objects;
+DROP POLICY IF EXISTS "Users can delete own avatars" ON storage.objects;
+
+-- ============================================
+-- PRODUCT IMAGES BUCKET POLICIES
+-- ============================================
+
+-- 1. Herkes ürün resimlerini görüntüleyebilir (SELECT)
+CREATE POLICY "Public Access" ON storage.objects
+FOR SELECT USING (bucket_id = 'product-images');
+
+-- 2. Sadece authenticated kullanıcılar ürün resmi yükleyebilir (INSERT)
+CREATE POLICY "Authenticated users can upload" ON storage.objects
+FOR INSERT WITH CHECK (
+  bucket_id = 'product-images' 
+  AND auth.role() = 'authenticated'
+);
+
+-- 3. Sadece resim sahibi ürün resmini silebilir (DELETE)
+CREATE POLICY "Users can delete own images" ON storage.objects
+FOR DELETE USING (
+  bucket_id = 'product-images' 
+  AND auth.uid()::text = (storage.foldername(name))[1]
+);
+
+-- ============================================
+-- USER AVATARS BUCKET POLICIES
+-- ============================================
+
+-- 4. Herkes avatar resimlerini görüntüleyebilir (SELECT)
+CREATE POLICY "Public Access Avatars" ON storage.objects
+FOR SELECT USING (bucket_id = 'user-avatars');
+
+-- 5. Sadece authenticated kullanıcılar avatar yükleyebilir (INSERT)
+CREATE POLICY "Authenticated users can upload avatars" ON storage.objects
+FOR INSERT WITH CHECK (
+  bucket_id = 'user-avatars' 
+  AND auth.role() = 'authenticated'
+);
+
+-- 6. Sadece avatar sahibi avatar resmini silebilir (DELETE)
+CREATE POLICY "Users can delete own avatars" ON storage.objects
+FOR DELETE USING (
+  bucket_id = 'user-avatars' 
+  AND auth.uid()::text = (storage.foldername(name))[1]
+);
